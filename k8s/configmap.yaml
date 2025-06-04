@@ -8,7 +8,7 @@ data:
     <!DOCTYPE html>
     <html>
     <head>
-        <title>My Argo CD Demo</title>
+        <title>Argo CD Demo</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
