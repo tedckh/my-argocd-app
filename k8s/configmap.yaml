@@ -31,6 +31,7 @@ data:
             <h1>Welcome to My Argo CD Demo!</h1>
             <p>This page is automatically deployed using Argo CD.</p>
             <p>Last updated: <span id="timestamp"></span></p>
+            <p>ref: <a href="https://github.com/tedckh/my-argocd-app" target="_blank">GitHub</a></p>
         </div>
         <script>
             document.getElementById('timestamp').textContent = new Date().toLocaleString();
