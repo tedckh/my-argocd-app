@@ -1,118 +1,155 @@
-# Prerequisites
+# Argo CD Demo Application
 
-- Kubernetes cluster (e.g., Minikube)
-- Argo CD installed in the cluster
-- kubectl configured to access the cluster
-- Argo CD CLI installed locally
+This repository contains a simple web application deployed using Argo CD, demonstrating GitOps principles and automated deployments.
+
+## Overview
+
+The application consists of:
+
+- A simple web page served by Nginx
+- Custom HTML content stored in a ConfigMap
+- Automated deployment using Argo CD
+
+## Prerequisites
+
+- [Minikube](https://minikube.sigs.k8s.io/docs/start/)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [Argo CD CLI](https://argo-cd.readthedocs.io/en/stable/cli_installation/)
+
+## Repository Structure
+
+```
+my-argocd-app/
+├── k8s/
+│   ├── configmap.yaml    # Custom HTML content
+│   ├── deployment.yaml   # Nginx deployment
+│   ├── service.yaml      # Service configuration
+│   └── namespace.yaml    # Namespace definition
+└── README.md
+```
 
 ## Getting Started
 
-1. **Clone the Repository**
+1. **Start Minikube**
 
-   ```sh
-   git clone https://github.com/tedckh/my-argocd-app.git
-   cd my-argocd-app
+   ```bash
+   minikube start
    ```
 
-2. **Create Argo CD Application**
+2. **Install Argo CD**
 
-   ```sh
+   ```bash
+   kubectl create namespace argocd
+   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+   ```
+
+3. **Access Argo CD UI**
+
+   ```bash
+   kubectl port-forward svc/argocd-server -n argocd 8080:443
+   ```
+
+   Then visit <https://localhost:8080> in your browser.
+
+4. **Login to Argo CD**
+
+   ```bash
+   # Get the initial admin password
+   kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+   ```
+
+   Username: `admin`
+   Password: (from the command above)
+
+5. **Create Argo CD Application**
+
+   ```bash
    argocd app create argocd-demo-app \
-     --repo https://github.com/tedckh/my-argocd-app.git \
+     --repo https://github.com/your-username/my-argocd-app.git \
      --path k8s \
      --dest-server https://kubernetes.default.svc \
      --dest-namespace argocd-demo-app
    ```
 
-3. **Sync the Application**
+6. **Enable Auto-Sync**
 
-   ```sh
-   argocd app sync argocd-demo-app
+   ```bash
+   argocd app set argocd-demo-app --sync-policy automated
    ```
 
-4. **Access the Application**
+7. **Access the Application**
 
-   ```sh
+   ```bash
    kubectl port-forward svc/argocd-demo-app -n argocd-demo-app 8081:80
    ```
 
-   Then open your browser and go to: <http://localhost:8081>
+   Then visit <http://localhost:8081> in your browser.
 
-## Application Components
+## Making Changes
 
-### Namespace
+1. **Update the HTML Content**
+   - Edit `k8s/configmap.yaml`
+   - Commit and push changes to Git
+   - Argo CD will automatically sync the changes
 
-- Name: `argocd-demo-app`
-- Purpose: Isolates the application resources
-
-### Deployment
-
-- Name: `argocd-demo-app`
-- Image: `nginx:latest`
-- Replicas: 1
-- Purpose: Runs the Nginx web server
-
-### Service
-
-- Name: `argocd-demo-app`
-- Type: ClusterIP
-- Port: 80
-- Purpose: Exposes the Nginx server internally
-
-## Monitoring and Management
-
-### Check Application Status
-
-```sh
-argocd app get argocd-demo-app
-```
-
-### View Application Resources
-
-```sh
-kubectl get all -n argocd-demo-app
-```
-
-### View Application Logs
-
-```sh
-kubectl logs -n argocd-demo-app -l app=argocd-demo-app
-```
-
-## GitOps Workflow
-
-1. Make changes to the Kubernetes manifests in the `k8s/` directory
-2. Commit and push changes to the repository
-3. Argo CD automatically detects changes and syncs the application
-4. Monitor the sync status using `argocd app get argocd-demo-app`
+2. **Update the Deployment**
+   - Edit `k8s/deployment.yaml`
+   - Commit and push changes to Git
+   - Argo CD will automatically sync the changes
 
 ## Troubleshooting
 
-### Common Issues
+1. **Check Application Status**
 
-1. **Application Out of Sync**
-   - Check if the repository URL is correct
-   - Verify the path to Kubernetes manifests
-   - Ensure the namespace exists
+   ```bash
+   argocd app get argocd-demo-app
+   ```
 
-2. **Pod Not Starting**
-   - Check pod logs: `kubectl logs -n argocd-demo-app <pod-name>`
-   - Verify image pull policy and image name
+2. **Check Pod Status**
 
-3. **Service Not Accessible**
-   - Verify service configuration
-   - Check if port forwarding is working
-   - Ensure the pod is running
+   ```bash
+   kubectl get pods -n argocd-demo-app
+   ```
+
+3. **Check ConfigMap**
+
+   ```bash
+   kubectl get configmap -n argocd-demo-app
+   ```
+
+4. **View Pod Logs**
+
+   ```bash
+   kubectl logs -n argocd-demo-app -l app=argocd-demo-app
+   ```
+
+## Cleanup
+
+1. **Delete the Application**
+
+   ```bash
+   argocd app delete argocd-demo-app
+   ```
+
+2. **Delete the Namespace**
+
+   ```bash
+   kubectl delete namespace argocd-demo-app
+   ```
+
+3. **Stop Minikube**
+
+   ```bash
+   minikube stop
+   ```
+
+## Notes
+
+- The application uses a NodePort service (port 8081) for external access
+- Custom HTML content is stored in a ConfigMap and mounted to the Nginx container
+- Auto-sync is enabled for automated deployments
+- No need to run `minikube tunnel` for this setup
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-EOF
+Feel free to submit issues and enhancement requests!
